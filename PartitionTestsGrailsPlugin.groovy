@@ -1,5 +1,5 @@
 class PartitionTestsGrailsPlugin {
-    def version = "0.1"
+    def version = "0.7-TW"
     def grailsVersion = "2.0 > *"
     def title = "Grails Partition Tests Plugin"
     def author = "Adrian Kelly"

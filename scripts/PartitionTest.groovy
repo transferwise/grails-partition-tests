@@ -29,6 +29,7 @@ target(partitionTests: "Splits all Grails test files based on arguments: split a
     }
     Integer split = Integer.valueOf(argsMap.split)
     Integer totalSplits = Integer.valueOf(argsMap.totalSplits)
+    String testReportsUrl = argsMap.testReportsUrl
 
     if(split < 0 || totalSplits < 0 ){
         error('Split arguments must not be negative!')
@@ -42,6 +43,11 @@ target(partitionTests: "Splits all Grails test files based on arguments: split a
 
     getBinding().setVariable('split', split)
     getBinding().setVariable('totalSplits', totalSplits)
+
+    if (testReportsUrl) {
+        log("Will try smarter split of tests")
+        getBinding().setVariable("testReportsUrl", testReportsUrl)
+    }
 
     log "** Running Tests in partition mode. Split (${split}) of (${totalSplits}) split${totalSplits > 1 ? "'s" : ''} **"
     if (!argsMap.skip) {

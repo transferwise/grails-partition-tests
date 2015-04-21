@@ -10,8 +10,15 @@ eventTestCompileStart = {testType ->
     Integer split = Integer.valueOf(binding.getVariable('split'))
 
     try {
-        def splitClass = classLoader.loadClass('grails.plugin.partitiontests.GrailsTestSplitter')
-        def splitter = splitClass.newInstance(split, totalSplits)
+        def isSmartSplit = binding.hasVariable('testReportsUrl')
+        def splitClass = isSmartSplit ?
+                classLoader.loadClass('grails.plugin.partitiontests.VoodooTestSplitter') :
+                classLoader.loadClass('grails.plugin.partitiontests.GrailsTestSplitter')
+
+        def splitter = isSmartSplit ? splitClass.newInstance(split, totalSplits, binding.getVariable('testReportsUrl')) : splitClass.newInstance(split, totalSplits)
+
+        grailsConsole.addStatus("Splitting tests with $splitter")
+
         testType.metaClass.eachSourceFile = splitter.eachSourceFileHotReplace
         testType.metaClass.testSplitter  = splitter
 

@@ -59,12 +59,16 @@ class GrailsTestSplitter {
     def eachSourceFileHotReplace = {Closure body ->
         testTargetPatterns.each { testTargetPattern ->
             println("Getting sources files for Split: ${currentSplit} of ${totalSplits} | Test Type: ${getName()} | Test Target Pattern: ${testTargetPattern}")
-            def allFiles = findSourceFiles(testTargetPattern)
+            List allFiles = findSourceFiles(testTargetPattern)
             println("All source files size: ${allFiles?.size()}")
-            def splitSourceFiles = getFilesForThisSplit(allFiles)
-            println("Split source files size:  ${splitSourceFiles?.size()}")
-            splitSourceFiles.each { sourceFile ->
-                body(testTargetPattern, sourceFile)
+
+            if (allFiles && !allFiles.isEmpty()) {
+                println "Getting files for split"
+                def splitSourceFiles = getFilesForThisSplit(allFiles)
+                println("Split source files size:  ${splitSourceFiles?.size()}")
+                splitSourceFiles.each { sourceFile ->
+                    body(testTargetPattern, sourceFile)
+                }
             }
         }
     }
