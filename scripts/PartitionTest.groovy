@@ -1,3 +1,5 @@
+import org.codehaus.groovy.grails.test.support.GrailsTestTypeSupport
+
 scriptEnv="test"
 includeTargets << grailsScript("_GrailsInit")
 includeTargets << grailsScript("_GrailsTest")
@@ -21,35 +23,26 @@ def log = {msg ->
 def error = {msg ->
     grailsConsole.error(msg)
 }
-//usage: grails partitionTest unit "--split=1" "--totalSplits=3"
-target(partitionTests: "Splits all Grails test files based on arguments: split and totalSplits.") {
-    if (!argsMap.split || !argsMap.totalSplits) {
-        error("Both arguments: split and totalSplits must be suppplied e.g (grails splitTest unit \"--split=1\" \"--totalSplits=3\")")
-        exit(0)
-    }
-    Integer split = Integer.valueOf(argsMap.split)
-    Integer totalSplits = Integer.valueOf(argsMap.totalSplits)
-    String testReportsUrl = argsMap.testReportsUrl
 
-    if(split < 0 || totalSplits < 0 ){
-        error('Split arguments must not be negative!')
-        exit(0)
-    }
+//usage: grails partitionTest unit "--testNames=SomeTest,AnotherTest"
+target(partitionTests: "Splits all Grails test files based on the testNames argument.") {
+	if (!argsMap.testNames) {
+		error('testNames must be provided')
+		exit(1)
+	}
 
-    if (split > totalSplits) {
-        error("Split(${split}) must not be greater than totalSplits(${totalSplits})")
-        exit(0)
-    }
+	def testNames = argsMap.testNames as String
+	def testNamesList = testNames.split(",")
+	log "testNamesList: " + testNamesList
+	grailsConsole.addStatus("Ready to compile '${testNamesList.size()}' tests for split run")
 
-    getBinding().setVariable('split', split)
-    getBinding().setVariable('totalSplits', totalSplits)
+	GrailsTestTypeSupport.metaClass.eachSourceFile = { Closure body ->
+		testNamesList.each { String testName ->
+			body(testName)
+		}
+	}
 
-    if (testReportsUrl) {
-        log("Will try smarter split of tests")
-        getBinding().setVariable("testReportsUrl", testReportsUrl)
-    }
-
-    log "** Running Tests in partition mode. Split (${split}) of (${totalSplits}) split${totalSplits > 1 ? "'s" : ''} **"
+    log "** Running Tests in partition mode. Tests: " + testNamesList + " **"
     if (!argsMap.skip) {
         log("Handing off to grails test-app")
 
