@@ -23,14 +23,6 @@ class GrailsTestSplitter {
 	    this.buildBinding = buildBinding
     }
 
-    GrailsTestSplitter(Integer currentSplit, List testTargetPatterns, String testTypeName, Binding buildBinding) {
-	    this.currentSplit = currentSplit
-	    this.totalSplits = 10
-	    this.testTargetPatterns = testTargetPatterns
-	    this.testTypeName = testTypeName
-	    this.buildBinding = buildBinding
-    }
-
     List getFilesForThisSplit(allSourceFiles) {
         def collated = collateSourceFiles(allSourceFiles, totalSplits)
         return collated.get(currentSplit - 1)
@@ -73,10 +65,15 @@ class GrailsTestSplitter {
     }
 
     def eachSourceFileHotReplace = {Closure body ->
-	    println "testTargetPatterns: " + testTargetPatterns
-
+	    //println "testTargetPatterns: " + testTargetPatterns
 	    testTargetPatterns.each { GrailsTestTargetPattern testTargetPattern ->
-            println("Getting sources files for Split: ${currentSplit} of ${totalSplits} | Test Type: ${testTypeName} | Test Target Pattern: ${testTargetPattern}")
+		    def debugString = "Getting sources files for split: ${currentSplit}"
+		    if (totalSplits != null)
+			    debugString += "of ${totalSplits}"
+
+		    debugString += " | Test type: ${testTypeName} | Test target pattern: ${testTargetPattern}"
+            println(debugString)
+
 		    def specFinder = new SpecFinder(buildBinding)
             List allFiles = specFinder.getTestClassNames(testTargetPattern)
             println("All source files size: ${allFiles?.size()}")
@@ -84,8 +81,8 @@ class GrailsTestSplitter {
             if (allFiles && !allFiles.isEmpty()) {
                 println "Getting files for split"
                 def splitSourceFiles = getFilesForThisSplit(allFiles)
-                println("Split source files size:  ${splitSourceFiles?.size()}")
 	            println("Split source files:  ${splitSourceFiles?.join(", ")}")
+                println("Split source files size:  ${splitSourceFiles?.size()}")
                 splitSourceFiles.each { sourceFile ->
                     body(testTargetPattern, sourceFile)
                 }

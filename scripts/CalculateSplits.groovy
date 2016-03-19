@@ -1,4 +1,5 @@
 scriptEnv="test"
+// Probably not all of these scripts are required.
 includeTargets << grailsScript("_GrailsInit")
 includeTargets << grailsScript("_GrailsClasspath")
 includeTargets << grailsScript("_GrailsEvents")
@@ -19,11 +20,13 @@ target(calculateSplits: "Splits tests into buckets and returns the number of req
 	String testReportsUrl = argsMap.testReportsUrl
 
 	if (testReportsUrl) {
-		log("Will try smarter split of tests")
+		log("Using testReportsUrl for splitting tests")
 		getBinding().setVariable("testReportsUrl", testReportsUrl)
 	}
 
-	log "Calling depends(default)"
+	getBinding().setVariable("doingCalculateSplits", true)
+
+	//log "Calling depends(default)"
 	depends('default')
 
 }

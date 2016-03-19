@@ -4,14 +4,14 @@ class VoodooTestSplitter extends GrailsTestSplitter {
 
     private IExecutionTimeProvider executionTimeProvider
 
-    VoodooTestSplitter(Integer currentSplit, String testReportUrl, List testTargetPatterns, String testTypeName,
+    VoodooTestSplitter(Integer currentSplit, Integer totalSplits, String testReportUrl, List testTargetPatterns, String testTypeName,
                        Binding buildBinding) {
-        this(currentSplit, new JenkinsExecutionTimeProvider(testReportUrl), testTargetPatterns, testTypeName, buildBinding)
+        this(currentSplit, totalSplits, new JenkinsExecutionTimeProvider(testReportUrl), testTargetPatterns, testTypeName, buildBinding)
     }
 
-    VoodooTestSplitter(Integer currentSplit, IExecutionTimeProvider executionTimeProvider, List testTargetPatterns,
+    VoodooTestSplitter(Integer currentSplit, Integer totalSplits, IExecutionTimeProvider executionTimeProvider, List testTargetPatterns,
                        String testTypeName, Binding buildBinding) {
-        super(currentSplit, testTargetPatterns, testTypeName, buildBinding)
+        super(currentSplit, totalSplits, testTargetPatterns, testTypeName, buildBinding)
         this.executionTimeProvider = executionTimeProvider
     }
 
@@ -34,6 +34,11 @@ class VoodooTestSplitter extends GrailsTestSplitter {
 
         List<FileBucket> buckets = splitTestFilesIntoBuckets(assignTimesToTestFiles(testFiles))
 
+        if (totalSplits != null && buckets.size() > totalSplits) {
+            println "Ooops, we have only $totalSplits available, but could use $buckets.size"
+            adjustNumberOfBuckets(buckets)
+        }
+
         println "Final file buckets:"
         buckets.each {
             println "->$it"
@@ -48,14 +53,33 @@ class VoodooTestSplitter extends GrailsTestSplitter {
         }
     }
 
+    def adjustNumberOfBuckets(List<FileBucket> buckets) {
+        if (totalSplits != null && totalSplits < buckets.size()) {
+            spreadSmallestBucket(buckets)
+            adjustNumberOfBuckets(buckets)
+        }
+    }
+
+    def spreadSmallestBucket(List<FileBucket> buckets) {
+        buckets.sort { it.totalTime }
+        FileBucket smallestBucket = buckets.remove(0)
+
+        smallestBucket.files.eachWithIndex { it, i ->
+            buckets.getAt(-1 * i).addFile(it)
+        }
+    }
+
     List<FileBucket> splitTestFilesIntoBuckets(List<TimedTestFile> testFiles) {
-	    testFiles.sort{ x, y ->
+        /* When two jobs have the same build time, sorting is indeterministic. This means a test could end up
+           in two different buckets. Sorting by name as well to avoid this situation. */
+	    testFiles.sort { x, y ->
 		    if (x.time == y.time){
 			    x.file.name <=> y.file.name
 		    } else {
 			    x.time <=> y.time
 		    }
 	    }
+
         TimedTestFile max = testFiles.get(testFiles.size() - 1)
         List<FileBucket> buckets = []
 
