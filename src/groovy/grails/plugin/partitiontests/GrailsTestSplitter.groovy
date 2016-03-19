@@ -79,10 +79,7 @@ class GrailsTestSplitter {
             println("All source files size: ${allFiles?.size()}")
 
             if (allFiles && !allFiles.isEmpty()) {
-                println "Getting files for split"
                 def splitSourceFiles = getFilesForThisSplit(allFiles)
-	            println("Split source files:  ${splitSourceFiles?.join(", ")}")
-                println("Split source files size:  ${splitSourceFiles?.size()}")
                 splitSourceFiles.each { sourceFile ->
                     body(testTargetPattern, sourceFile)
                 }
