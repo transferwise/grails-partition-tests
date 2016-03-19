@@ -97,15 +97,10 @@ void doPartitionTests(String testReportsUrl, testType) {
 	Integer totalSplits = Integer.valueOf(binding.getVariable('totalSplits'))
 	Integer split = Integer.valueOf(binding.getVariable('split'))
 
-	try {
-		def splitter = getSplitter(split, totalSplits, testReportsUrl, classLoader, binding)
+	def splitter = getSplitter(split, totalSplits, testReportsUrl, classLoader, binding, testType)
 
-		testType.metaClass.eachSourceFile = splitter.eachSourceFileHotReplace
-		testType.metaClass.testSplitter = splitter
-
-	} catch (Throwable t) {
-		grailsConsole.error("Could not add split support", t)
-	}
+	testType.metaClass.eachSourceFile = splitter.eachSourceFileHotReplace
+	testType.metaClass.testSplitter = splitter
 
 	grailsConsole.addStatus("Done adding split support")
 }
