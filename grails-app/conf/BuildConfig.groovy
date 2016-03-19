@@ -21,9 +21,10 @@ grails.project.dependency.resolution = {
     plugins {
         test(":spock:0.7") {
             exclude "spock-grails-support"
+            export = false
         }
 
-        build ':release:2.2.1', ':rest-client-builder:1.0.3', {
+        build (':release:2.2.1') {
             export = false
         }
     }

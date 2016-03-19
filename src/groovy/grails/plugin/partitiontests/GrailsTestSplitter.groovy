@@ -5,14 +5,22 @@ import org.apache.commons.io.comparator.DirectoryFileComparator
 import org.apache.commons.io.comparator.NameFileComparator
 import org.apache.commons.io.comparator.PathFileComparator
 import org.apache.commons.io.comparator.SizeFileComparator
+import org.codehaus.groovy.grails.test.GrailsTestTargetPattern
 
 class GrailsTestSplitter {
     Integer currentSplit
     Integer totalSplits
+	String testTypeName
+	List<GrailsTestTargetPattern> testTargetPatterns
+	Binding buildBinding
 
-    GrailsTestSplitter(Integer currentSplit, Integer totalSplits) {
+    GrailsTestSplitter(Integer currentSplit, Integer totalSplits, List testTargetPatterns, String testTypeName,
+                       Binding buildBinding) {
         this.currentSplit = currentSplit
         this.totalSplits = totalSplits
+	    this.testTargetPatterns = testTargetPatterns
+	    this.testTypeName = testTypeName
+	    this.buildBinding = buildBinding
     }
 
     List getFilesForThisSplit(allSourceFiles) {
@@ -57,14 +65,23 @@ class GrailsTestSplitter {
     }
 
     def eachSourceFileHotReplace = {Closure body ->
-        testTargetPatterns.each { testTargetPattern ->
-            println("Getting sources files for Split: ${currentSplit} of ${totalSplits} | Test Type: ${getName()} | Test Target Pattern: ${testTargetPattern}")
-            List allFiles = findSourceFiles(testTargetPattern)
+	    //println "testTargetPatterns: " + testTargetPatterns
+	    testTargetPatterns.each { GrailsTestTargetPattern testTargetPattern ->
+		    def debugString = "Getting sources files for split: ${currentSplit}"
+		    if (totalSplits != null)
+			    debugString += "of ${totalSplits}"
+
+		    debugString += " | Test type: ${testTypeName} | Test target pattern: ${testTargetPattern}"
+            println(debugString)
+
+		    def specFinder = new SpecFinder(buildBinding)
+            List allFiles = specFinder.getTestClassNames(testTargetPattern)
             println("All source files size: ${allFiles?.size()}")
 
             if (allFiles && !allFiles.isEmpty()) {
                 println "Getting files for split"
                 def splitSourceFiles = getFilesForThisSplit(allFiles)
+	            println("Split source files:  ${splitSourceFiles?.join(", ")}")
                 println("Split source files size:  ${splitSourceFiles?.size()}")
                 splitSourceFiles.each { sourceFile ->
                     body(testTargetPattern, sourceFile)
